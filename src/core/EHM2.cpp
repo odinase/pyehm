@@ -455,6 +455,44 @@ namespace ehm
             return a_matrix;
         }
 
+        std::tuple<Eigen::MatrixXd, double> EHM2::runAndLikelihood(const Eigen::MatrixXi& validation_matrix, const Eigen::MatrixXd& likelihood_matrix) {
+                        // Cluster tracks into groups that share common detections
+            std::vector<ClusterPtr> clusters = genClusters(validation_matrix, likelihood_matrix);
+
+            // Initialise the association probabilities matrix
+            Eigen::MatrixXd a_matrix = Eigen::MatrixXd::Zero(validation_matrix.rows(), validation_matrix.cols());
+            double likelihood = 1.0;
+
+            // Perform EHM for each cluster
+            for (ClusterPtr cluster : clusters)
+            {
+                // Extract track and detection indices
+                std::vector<int> c_tracks = cluster->tracks;
+                std::vector<int> c_detections = cluster->detections;
+
+                if (c_detections.size() == 0)
+                {
+                    a_matrix(c_tracks, 0).setOnes();
+                    continue;
+                }
+
+                // Extract validation and likelihood matrices for cluster
+                Eigen::MatrixXi c_validation_matrix = cluster->validation_matrix;
+                Eigen::MatrixXd c_likelihood_matrix = cluster->likelihood_matrix;
+
+                // Construct the EHM net
+                EHM2NetPtr net = constructNet(c_validation_matrix);
+
+                // Compute the association probabilities
+                auto [c_a_matrix, c_likelihood] = computeAssociationMatrixAndLikelihood(net, c_likelihood_matrix);
+                likelihood *= c_likelihood;
+
+                // Update the association probabilities matrix
+                a_matrix(c_tracks, c_detections) = c_a_matrix;
+            }
+            return {a_matrix, likelihood};
+        }
+
         std::tuple<Eigen::MatrixXd, double> EHM2::exact_marginal(const Eigen::MatrixXi &validation_matrix, const Eigen::MatrixXd &likelihood_matrix)
         {
 
@@ -466,10 +504,15 @@ namespace ehm
             const int num_detections = validation_matrix.cols() - 1;
 
             // Extract track and detection indices
-            std::vector<int> c_tracks{num_tracks};
-            std::iota(c_tracks.begin(), c_tracks.end(), 0);
-            std::vector<int> c_detections{num_detections};
-            std::iota(c_detections.begin(), c_detections.end(), 0);
+            std::vector<int> c_tracks;
+            for (size_t t = 0; t < num_tracks; t++) {
+                c_tracks.push_back(t);
+            }
+
+            std::vector<int> c_detections;
+            for (size_t m = 0; m < num_detections; m++) {
+                c_detections.push_back(m);
+            }
 
             if (num_detections == 0)
             {

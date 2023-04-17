@@ -24,6 +24,7 @@ public:
     static Eigen::MatrixXd computeAssociationMatrix(const EHM2NetPtr net, const Eigen::MatrixXd& likelihood_matrix);
     static std::tuple<Eigen::MatrixXd, double> computeAssociationMatrixAndLikelihood(const EHM2NetPtr net, const Eigen::MatrixXd &likelihood_matrix);
     static Eigen::MatrixXd run(const Eigen::MatrixXi& validation_matrix, const Eigen::MatrixXd& likelihood_matrix);
+    static std::tuple<Eigen::MatrixXd, double> runAndLikelihood(const Eigen::MatrixXi& validation_matrix, const Eigen::MatrixXd& likelihood_matrix);
     static std::tuple<Eigen::MatrixXd, double> exact_marginal(const Eigen::MatrixXi& validation_matrix, const Eigen::MatrixXd& likelihood_matrix);
     static EHM2TreePtr constructTree(const Eigen::MatrixXi& validation_matrix);
 };
