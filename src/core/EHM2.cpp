@@ -473,6 +473,9 @@ namespace ehm
                 if (c_detections.size() == 0)
                 {
                     a_matrix(c_tracks, 0).setOnes();
+                    // The likelihood is the product of all measurements not being detected(?)
+                    double c_likelihood = likelihood_matrix(c_tracks, 0).prod();
+                    likelihood *= c_likelihood;
                     continue;
                 }
 
